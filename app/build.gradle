@@ -1,8 +1,31 @@
 apply plugin: 'com.android.application'
 
 android {
+    def googleMapsApiKeyRelease = "PLACE_HOLDER"
+
+    Properties props = new Properties()
+    def propFile = file('./signing.properties')
+    if (propFile.canRead() && props != null) {
+        def GOOGLE_MAPS_API_KEY_RELEASE = "GOOGLE_MAPS_API_KEY_RELEASE"
+        def KEY_PASSWORD_DEBUG = "KEY_PASSWORD_DEBUG"
+        def KEY_ALIAS_DEBUG = "KEY_ALIAS_DEBUG"
+        def STORE_FILE_DEBUG = "STORE_FILE_DEBUG"
+
+        props.load(new FileInputStream(propFile))
+        if (props.containsKey(GOOGLE_MAPS_API_KEY_RELEASE)) {
+            googleMapsApiKeyRelease = props[GOOGLE_MAPS_API_KEY_RELEASE]
+        }
+        if (props.containsKey(STORE_FILE_DEBUG) && props.containsKey(KEY_PASSWORD_DEBUG)
+                && props.containsKey(KEY_ALIAS_DEBUG)) {
+            android.signingConfigs.debug.storeFile = file(props[STORE_FILE_DEBUG])
+            android.signingConfigs.debug.storePassword = props[KEY_PASSWORD_DEBUG]
+            android.signingConfigs.debug.keyAlias = props[KEY_ALIAS_DEBUG]
+            android.signingConfigs.debug.keyPassword = props[KEY_PASSWORD_DEBUG]
+        }
+    }
     compileSdkVersion 28
     defaultConfig {
+        manifestPlaceholders = [googleApiKey:googleMapsApiKeyRelease]
         applicationId "de.p72b.bht.wp12"
         minSdkVersion 23
         targetSdkVersion 28
