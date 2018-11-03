@@ -1,8 +1,7 @@
 package de.p72b.bht.wp12.map;
 
-import android.location.Location;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+import android.view.View;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -13,12 +12,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import de.p72b.bht.wp12.R;
 import de.p72b.bht.wp12.location.BaseLocationAwareActivity;
-import de.p72b.bht.wp12.location.ILastLocationListener;
 
 public class MapsActivity extends BaseLocationAwareActivity implements OnMapReadyCallback,
-        ILastLocationListener {
+        View.OnClickListener {
 
     private GoogleMap mMap;
+    private MapsPresenter mPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,10 +27,10 @@ public class MapsActivity extends BaseLocationAwareActivity implements OnMapRead
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        mPresenter = new MapsPresenter(mLocationManager);
 
-        mLocationManager.getLastLocation(this);
+        findViewById(R.id.floatingActionButtonLocateMe).setOnClickListener(this);
     }
-
 
     /**
      * Manipulates the map once available.
@@ -53,12 +52,7 @@ public class MapsActivity extends BaseLocationAwareActivity implements OnMapRead
     }
 
     @Override
-    public void onLastLocationSuccess(@NonNull Location location) {
-        // TODO
-    }
-
-    @Override
-    public void onLastLocationFailure(@NonNull String message) {
-        // TODO
+    public void onClick(View view) {
+        mPresenter.onClick(view.getId());
     }
 }
