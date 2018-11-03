@@ -57,11 +57,7 @@ class GooglePlayServicesLocationSource {
         getLastLocationTask.addOnSuccessListener(new OnSuccessListener<Location>() {
             @Override
             public void onSuccess(Location location) {
-                if (location != null) {
-                    listener.onLastLocationSuccess(location);
-                } else {
-                    listener.onLastLocationFailure("Location is null");
-                }
+                listener.onLastLocationSuccess(location);
             }
         });
         getLastLocationTask.addOnFailureListener(new OnFailureListener() {
