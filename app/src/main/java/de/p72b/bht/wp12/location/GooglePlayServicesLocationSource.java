@@ -1,5 +1,6 @@
 package de.p72b.bht.wp12.location;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.location.Location;
@@ -15,14 +16,22 @@ class GooglePlayServicesLocationSource {
 
     private final Activity mActivity;
     private final FusedLocationProviderClient mFusedLocationClient;
+    private final PermissionManager mPermissionManager;
 
-    GooglePlayServicesLocationSource(@NonNull final Activity activity) {
+    GooglePlayServicesLocationSource(@NonNull final Activity activity,
+                                     @NonNull final PermissionManager permissionManager) {
         mActivity = activity;
+        mPermissionManager = permissionManager;
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(mActivity);
     }
 
     @SuppressLint("MissingPermission")
-    public void getLastLocation(@NonNull final ILastLocationListener listener) {
+    void getLastLocation(@NonNull final ILastLocationListener listener) {
+        if (!mPermissionManager.hasPermissionIfNotRequest(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            listener.onLastLocationFailure("Location permission missing");
+            return;
+        }
+
         final Task<Location> getLastLocationTask = mFusedLocationClient.getLastLocation();
         getLastLocationTask.addOnSuccessListener(new OnSuccessListener<Location>() {
             @Override
