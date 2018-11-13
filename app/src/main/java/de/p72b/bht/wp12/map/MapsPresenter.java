@@ -55,6 +55,6 @@ class MapsPresenter implements ILastLocationListener, ILocationUpdatesListener {
 
     @Override
     public void onLocationChanged(@NonNull Location location) {
-
+        mView.onLocationChanged(location);
     }
 }

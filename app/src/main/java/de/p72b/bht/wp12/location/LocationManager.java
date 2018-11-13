@@ -1,5 +1,6 @@
 package de.p72b.bht.wp12.location;
 
+import android.Manifest;
 import android.app.Activity;
 import android.location.Location;
 import android.support.annotation.NonNull;
@@ -13,11 +14,12 @@ public class LocationManager implements ILocationUpdatesListener {
     private final GooglePlayServicesLocationSource mFusedLocationSource;
     private CopyOnWriteArrayList<ILocationUpdatesListener> mSubscribers =
             new CopyOnWriteArrayList<>();
+    private PermissionManager mPermissionManager;
 
     LocationManager(@NonNull final Activity activity, @NonNull final Settings settings,
                     @NonNull final SettingsClientManager settingsClientManager) {
-        final PermissionManager permissionManager = new PermissionManager(activity, settings);
-        mFusedLocationSource = new GooglePlayServicesLocationSource(activity, permissionManager,
+        mPermissionManager = new PermissionManager(activity, settings);
+        mFusedLocationSource = new GooglePlayServicesLocationSource(activity, mPermissionManager,
                 settingsClientManager, this);
     }
 
@@ -47,5 +49,9 @@ public class LocationManager implements ILocationUpdatesListener {
         if (mSubscribers.isEmpty()) {
             mFusedLocationSource.stopReceivingLocationUpdates();
         }
+    }
+
+    public boolean hasLocationPermission() {
+        return mPermissionManager.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION);
     }
 }
