@@ -7,9 +7,11 @@ import android.support.v4.app.FragmentActivity;
 
 import de.p72b.bht.wp12.R;
 import de.p72b.bht.wp12.location.ILastLocationListener;
+import de.p72b.bht.wp12.location.ILocationUpdatesListener;
 import de.p72b.bht.wp12.location.LocationManager;
 
-class MapsPresenter implements ILastLocationListener {
+class MapsPresenter implements ILastLocationListener, ILocationUpdatesListener {
+
     private LocationManager mLocationManager;
     private IMapsView mView;
 
@@ -34,12 +36,25 @@ class MapsPresenter implements ILastLocationListener {
     }
 
     public void onClick(int viewId) {
-        switch(viewId) {
+        switch (viewId) {
             case R.id.floatingActionButtonLocateMe:
                 mLocationManager.getLastLocation(this);
                 break;
             default:
                 // do nothing here
         }
+    }
+
+    void onResume() {
+        mLocationManager.subscribeToLocationChanges(this);
+    }
+
+    void onPause() {
+        mLocationManager.unSubscribeToLocationChanges(this);
+    }
+
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+
     }
 }

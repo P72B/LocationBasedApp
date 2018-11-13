@@ -59,6 +59,18 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        mPresenter.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        mPresenter.onPause();
+        super.onPause();
+    }
+
+    @Override
     public void onClick(View view) {
         mPresenter.onClick(view.getId());
     }
@@ -73,7 +85,7 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
     }
 
     @Override
-    public void showError(String message) {
+    public void showError(@NonNull String message) {
         Snackbar.make(mRootView, message, Snackbar.LENGTH_LONG).show();
     }
 }

@@ -5,9 +5,12 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.location.Location;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -15,20 +18,33 @@ import com.google.android.gms.tasks.Task;
 
 class GooglePlayServicesLocationSource {
 
-    private final Activity mActivity;
     private final FusedLocationProviderClient mFusedLocationClient;
     private final PermissionManager mPermissionManager;
     private final SettingsClientManager mSettingsClientManager;
     private LocationRequest mLocationRequest;
+    private LocationCallback mLocationCallback;
+    private ILocationUpdatesListener mLocationUpdatesListener;
 
     GooglePlayServicesLocationSource(@NonNull final Activity activity,
                                      @NonNull final PermissionManager permissionManager,
-                                     @NonNull final SettingsClientManager settingsClientManager) {
-        mActivity = activity;
+                                     @NonNull final SettingsClientManager settingsClientManager,
+                                     @Nullable final ILocationUpdatesListener listener) {
         mPermissionManager = permissionManager;
         mSettingsClientManager = settingsClientManager;
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(mActivity);
+        mLocationUpdatesListener = listener;
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(activity);
         initLocationRequest();
+        mLocationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(@Nullable final LocationResult locationResult) {
+                if (locationResult == null || mLocationUpdatesListener == null) {
+                    return;
+                }
+                for (Location location : locationResult.getLocations()) {
+                    mLocationUpdatesListener.onLocationChanged(location);
+                }
+            }
+        };
     }
 
     void getLastLocation(@NonNull final ILastLocationListener listener) {
@@ -49,6 +65,32 @@ class GooglePlayServicesLocationSource {
                         listener.onLastLocationFailure(message);
                     }
                 });
+    }
+
+    void startReceivingLocationUpdates() {
+        if (!mPermissionManager.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                || mLocationUpdatesListener == null) {
+            return;
+        }
+
+        mSettingsClientManager.checkIfDeviceLocationSettingFulfillRequestRequirements(
+                false, mLocationRequest, new ISettingsClientResultListener() {
+                    @SuppressLint("MissingPermission")
+                    @Override
+                    public void onSuccess() {
+                        mFusedLocationClient.requestLocationUpdates(mLocationRequest,
+                                mLocationCallback, null);
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull final String message) {
+                        // it makes no sense to start location updates without proper settings.
+                    }
+                });
+    }
+
+    void stopReceivingLocationUpdates() {
+        mFusedLocationClient.removeLocationUpdates(mLocationCallback);
     }
 
     @SuppressLint("MissingPermission")

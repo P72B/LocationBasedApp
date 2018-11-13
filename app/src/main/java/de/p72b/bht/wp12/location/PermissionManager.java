@@ -29,6 +29,10 @@ class PermissionManager {
         return true;
     }
 
+    boolean hasPermission(@NonNull final String permission) {
+        return PermissionChecker.PERMISSION_GRANTED == getPermissionStatus(permission);
+    }
+
     private int getPermissionStatus(@NonNull final String manifestPermissionName) {
         if (ContextCompat.checkSelfPermission(mActivity, manifestPermissionName) ==
                 PackageManager.PERMISSION_GRANTED) {
