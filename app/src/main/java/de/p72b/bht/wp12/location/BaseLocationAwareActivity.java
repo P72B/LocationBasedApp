@@ -13,7 +13,7 @@ import de.p72b.bht.wp12.Service.Settings;
 public class BaseLocationAwareActivity extends FragmentActivity {
 
     protected LocationManager mLocationManager;
-    private SettingsClientManager mSettingsClientManager;
+    protected SettingsClientManager mSettingsClientManager;
     private Settings mSettings;
 
     @Override

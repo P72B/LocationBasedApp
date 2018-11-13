@@ -9,4 +9,6 @@ public interface IMapsView {
     void showError(final String message);
 
     void onLocationChanged(@NonNull final Location location);
+
+    void followLocationVisibility(final int visibility);
 }
