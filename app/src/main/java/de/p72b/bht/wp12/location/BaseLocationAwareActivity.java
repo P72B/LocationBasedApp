@@ -31,6 +31,7 @@ public class BaseLocationAwareActivity extends FragmentActivity {
         for (String permission: permissions) {
             mSettings.writeToPreferences(permission, true);
         }
+        mLocationManager.notifyPermissionRequestResults(permissions, grantResults);
     }
 
     @Override

@@ -25,6 +25,7 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
     private MapsPresenter mPresenter;
     private View mRootView;
     private OnLocationChangedListener mMapLocationListener = null;
+    private boolean mFirstLocationUpdate = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +52,6 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
-    @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -63,9 +63,6 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
 
         mMap.setLocationSource(this);
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
-        if (mLocationManager.hasLocationPermission()) {
-            mMap.setMyLocationEnabled(true);
-        }
     }
 
     @Override
@@ -99,8 +96,16 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
         Snackbar.make(mRootView, message, Snackbar.LENGTH_LONG).show();
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onLocationChanged(@NonNull Location location) {
+        if (mFirstLocationUpdate) {
+            if (mLocationManager.hasLocationPermission()) {
+                mMap.setMyLocationEnabled(true);
+            }
+            mFirstLocationUpdate = false;
+        }
+
         if (mMapLocationListener != null) {
             mMapLocationListener.onLocationChanged(location);
         }

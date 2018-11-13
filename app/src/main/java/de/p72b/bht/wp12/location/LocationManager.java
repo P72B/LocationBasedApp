@@ -54,4 +54,23 @@ public class LocationManager implements ILocationUpdatesListener {
     public boolean hasLocationPermission() {
         return mPermissionManager.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION);
     }
+
+    void notifyPermissionRequestResults(String[] permissions, int[] grantResults) {
+        int index = 0;
+        for (String permission: permissions) {
+            switch(permission) {
+                case Manifest.permission_group.LOCATION:
+                case Manifest.permission.ACCESS_COARSE_LOCATION:
+                case Manifest.permission.ACCESS_FINE_LOCATION:
+                    int grantResult = grantResults[index];
+                    if (Activity.RESULT_OK == grantResult) {
+                        mFusedLocationSource.startReceivingLocationUpdates();
+                    } else if (Activity.RESULT_CANCELED == grantResult) {
+                        mFusedLocationSource.stopReceivingLocationUpdates();
+                    }
+                    break;
+            }
+            index++;
+        }
+    }
 }
