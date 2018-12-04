@@ -8,14 +8,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.p72b.bht.wp12.App;
+import de.p72b.bht.wp12.http.WebService;
 
 public final class AppServices {
 
+    public static final String WEB = "WEB";
     public static final String SETTINGS = "SETTINGS";
 
     private final static Map<String, Object> SERVICES = new HashMap<>();
 
     static {
+        SERVICES.put(WEB, new WebService());
         SERVICES.put(SETTINGS, new Settings(App.getInstance()));
     }
 
@@ -28,7 +31,7 @@ public final class AppServices {
         return (T) SERVICES.get(service);
     }
 
-    @StringDef({SETTINGS})
+    @StringDef({SETTINGS, WEB})
     @Retention(RetentionPolicy.SOURCE)
     @interface Service {
     }

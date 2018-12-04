@@ -98,7 +98,7 @@ class GooglePlayServicesLocationSource {
         final Task<Location> getLastLocationTask = mFusedLocationClient.getLastLocation();
         getLastLocationTask.addOnSuccessListener(new OnSuccessListener<Location>() {
             @Override
-            public void onSuccess(Location location) {
+            public void onSuccess(@Nullable Location location) {
                 listener.onLastLocationSuccess(location);
             }
         });

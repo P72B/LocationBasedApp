@@ -26,6 +26,16 @@
         app:layout_anchorGravity="end">
 
         <android.support.design.widget.FloatingActionButton
+            android:id="@+id/floatingActionButtonLocateMeWifi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="17dp"
+            android:layout_marginBottom="17dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@drawable/ic_wifi_black_24dp" />
+
+        <android.support.design.widget.FloatingActionButton
             android:id="@+id/floatingActionButtonLocateMe"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

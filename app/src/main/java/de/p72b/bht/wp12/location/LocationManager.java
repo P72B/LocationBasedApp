@@ -9,12 +9,16 @@ import com.google.android.gms.location.LocationRequest;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import de.p72b.bht.wp12.App;
+import de.p72b.bht.wp12.Service.AppServices;
 import de.p72b.bht.wp12.Service.Settings;
+import de.p72b.bht.wp12.http.IWebService;
 
 public class LocationManager implements ILocationUpdatesListener {
 
     private final GooglePlayServicesLocationSource mFusedLocationSource;
     private final SettingsClientManager mSettingsClientManager;
+    private final WifiGeolocationSource mWifiGeolocationSource;
     private CopyOnWriteArrayList<ILocationUpdatesListener> mSubscribers =
             new CopyOnWriteArrayList<>();
     private PermissionManager mPermissionManager;
@@ -25,6 +29,9 @@ public class LocationManager implements ILocationUpdatesListener {
         mPermissionManager = new PermissionManager(activity, settings);
         mFusedLocationSource = new GooglePlayServicesLocationSource(activity, mPermissionManager,
                 settingsClientManager, this);
+
+        IWebService webService = AppServices.getService(AppServices.WEB);
+        mWifiGeolocationSource = new WifiGeolocationSource(webService, mPermissionManager);
     }
 
     @Override
@@ -39,6 +46,10 @@ public class LocationManager implements ILocationUpdatesListener {
 
     public void getLastLocation(@NonNull final ILastLocationListener listener) {
         mFusedLocationSource.getLastLocation(listener);
+    }
+
+    public void getWifiBasedLocation(@NonNull final ILastLocationListener listener) {
+        mWifiGeolocationSource.scanForWifi(listener);
     }
 
     public void subscribeToLocationChanges(ILocationUpdatesListener listener) {

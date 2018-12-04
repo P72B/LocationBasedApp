@@ -32,6 +32,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "GOOGLE_API_BACKEND", "\"https://www.googleapis.com/\""
     }
     buildTypes {
         release {
@@ -48,4 +49,9 @@ dependencies {
     implementation "com.android.support:design:${supportVersion}"
     implementation "com.google.android.gms:play-services-maps:${playServicesVersion}"
     implementation "com.google.android.gms:play-services-location:${playServicesVersion}"
+    implementation "io.reactivex.rxjava2:rxjava:${rxjavaVersion}"
+    implementation "io.reactivex.rxjava2:rxandroid:${rxandroidVersion}"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:${retrofitVersion}"
+    implementation "com.squareup.retrofit2:converter-gson:${retrofitVersion}"
+    implementation "com.squareup.retrofit2:retrofit:${retrofitVersion}"
 }

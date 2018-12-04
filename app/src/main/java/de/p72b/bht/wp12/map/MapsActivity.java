@@ -14,6 +14,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -30,7 +32,9 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
     private OnLocationChangedListener mMapLocationListener = null;
     private boolean mFirstLocationUpdate = true;
     private FloatingActionButton mLocateMeFab;
+    private FloatingActionButton mLocateMeFabWifi;
     private int mLastFollowLocationVisibility;
+    private Circle mWifiCircle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +50,8 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
         mRootView = findViewById(android.R.id.content);
         mLocateMeFab = findViewById(R.id.floatingActionButtonLocateMe);
         mLocateMeFab.setOnClickListener(this);
+        mLocateMeFabWifi = findViewById(R.id.floatingActionButtonLocateMeWifi);
+        mLocateMeFabWifi.setOnClickListener(this);
 
         findViewById(R.id.mapOverlay).setOnTouchListener(new View.OnTouchListener() {
             @SuppressLint("ClickableViewAccessibility")
@@ -130,6 +136,23 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
         } else {
             mLocateMeFab.setImageResource(R.drawable.ic_gps_off_black_24dp);
         }
+    }
+
+    @Override
+    public void showWifiLocation(@NonNull Location location) {
+        if (mMap == null) {
+            return;
+        }
+        final CircleOptions circleOptions = new CircleOptions()
+                .center(new LatLng(location.getLatitude(), location.getLongitude()))
+                .strokeWidth(2)
+                .strokeColor(getApplicationContext().getColor(R.color.colorPrimary))
+                .fillColor(getApplicationContext().getColor(R.color.fillWifiCircle))
+                .radius(location.getAccuracy());
+        if (mWifiCircle != null) {
+            mWifiCircle.remove();
+        }
+        mWifiCircle = mMap.addCircle(circleOptions);
     }
 
     @Override

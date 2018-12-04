@@ -12,7 +12,7 @@ import de.p72b.bht.wp12.location.ILocationUpdatesListener;
 import de.p72b.bht.wp12.location.ISettingsClientResultListener;
 import de.p72b.bht.wp12.location.LocationManager;
 
-class MapsPresenter implements ILastLocationListener, ILocationUpdatesListener {
+class MapsPresenter implements ILocationUpdatesListener {
 
     private LocationManager mLocationManager;
     private IMapsView mView;
@@ -26,15 +26,6 @@ class MapsPresenter implements ILastLocationListener, ILocationUpdatesListener {
         initLocateMeFabIcon();
     }
 
-    @Override
-    public void onLastLocationSuccess(@Nullable Location location) {
-        setGpsBlocked(false);
-        if (location == null) {
-            return;
-        }
-        mView.moveCameraTo(location);
-    }
-
     private void setGpsBlocked(boolean state) {
         if (mIsGpsBlocked != state) {
             initLocateMeFabIcon();
@@ -42,15 +33,24 @@ class MapsPresenter implements ILastLocationListener, ILocationUpdatesListener {
         mIsGpsBlocked = state;
     }
 
-    @Override
-    public void onLastLocationFailure(@NonNull String message) {
-        mView.showError(message);
-    }
-
     public void onClick(int viewId) {
         switch (viewId) {
             case R.id.floatingActionButtonLocateMe:
-                mLocationManager.getLastLocation(this);
+                mLocationManager.getLastLocation(new ILastLocationListener() {
+                    @Override
+                    public void onLastLocationSuccess(@Nullable Location location) {
+                        if (location == null) {
+                            return;
+                        }
+                        setGpsBlocked(false);
+                        mView.moveCameraTo(location);
+                    }
+
+                    @Override
+                    public void onLastLocationFailure(@NonNull String message) {
+                        mView.showError(message);
+                    }
+                });
                 if (mIsGpsBlocked) {
                     return;
                 }
@@ -63,6 +63,23 @@ class MapsPresenter implements ILastLocationListener, ILocationUpdatesListener {
                 }
                 mFollowLocation = false;
                 mView.followLocationVisibility(View.INVISIBLE);
+                break;
+            case R.id.floatingActionButtonLocateMeWifi:
+                mLocationManager.getWifiBasedLocation(new ILastLocationListener() {
+                    @Override
+                    public void onLastLocationSuccess(@Nullable Location location) {
+                        if (location == null) {
+                            return;
+                        }
+                        mView.showWifiLocation(location);
+                        mView.moveCameraTo(location);
+                    }
+
+                    @Override
+                    public void onLastLocationFailure(@NonNull String message) {
+                        mView.showError(message);
+                    }
+                });
                 break;
             default:
                 // do nothing here

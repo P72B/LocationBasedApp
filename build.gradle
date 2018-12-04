@@ -29,4 +29,8 @@ task clean(type: Delete) {
 ext {
     playServicesVersion = "16.0.0"
     supportVersion = "28.0.0"
+    rxjavaVersion = "2.1.2"
+    rxandroidVersion = "2.0.1"
+    retrofitVersion = "2.5.0"
+    gsonVersion = "2.8.5"
 }
