@@ -15,10 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.p72b.bht.wp12.App;
-import de.p72b.bht.wp12.http.GeolocationRequest;
-import de.p72b.bht.wp12.http.GeolocationResponse;
+import de.p72b.bht.wp12.http.googleapi.geolocation.GeolocationRequest;
+import de.p72b.bht.wp12.http.googleapi.geolocation.GeolocationResponse;
 import de.p72b.bht.wp12.http.IWebService;
-import de.p72b.bht.wp12.http.WifiAccessPoint;
+import de.p72b.bht.wp12.http.googleapi.geolocation.WifiAccessPoint;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;

@@ -6,11 +6,19 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.view.View;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import de.p72b.bht.wp12.R;
+import de.p72b.bht.wp12.http.IWebService;
+import de.p72b.bht.wp12.http.googleapi.geocode.AddressResponse;
 import de.p72b.bht.wp12.location.ILastLocationListener;
 import de.p72b.bht.wp12.location.ILocationUpdatesListener;
 import de.p72b.bht.wp12.location.ISettingsClientResultListener;
 import de.p72b.bht.wp12.location.LocationManager;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 class MapsPresenter implements ILocationUpdatesListener {
 
@@ -18,10 +26,14 @@ class MapsPresenter implements ILocationUpdatesListener {
     private IMapsView mView;
     private boolean mFollowLocation = false;
     private boolean mIsGpsBlocked = true;
+    private Disposable mGeocodeDisposable;
+    private IWebService mWebService;
 
     MapsPresenter(@NonNull final FragmentActivity fragmentActivity,
-                  @NonNull final LocationManager locationManager) {
+                  @NonNull final LocationManager locationManager,
+                  @NonNull final IWebService webService) {
         mLocationManager = locationManager;
+        mWebService = webService;
         mView = (IMapsView) fragmentActivity;
         initLocateMeFabIcon();
     }
@@ -92,6 +104,41 @@ class MapsPresenter implements ILocationUpdatesListener {
 
     void onPause() {
         mLocationManager.unSubscribeToLocationChanges(this);
+        shutDownDisposables();
+    }
+
+    void onMapLongClick(@NonNull final LatLng latLng) {
+        mView.showAddressLocation(latLng);
+        shutDownDisposables();
+        mWebService.reverseGeoCoding(latLng)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<AddressResponse>() {
+                    @Override
+                    public void onSubscribe(Disposable disposable) {
+                        mGeocodeDisposable = disposable;
+                    }
+
+                    @Override
+                    public void onNext(AddressResponse addressResponse) {
+                        if (!addressResponse.getResults().isEmpty()) {
+                            String address = addressResponse.getResults().get(0).getFormattedAddress();
+                            mView.showAddress(address);
+                        } else {
+                            mView.showError("Address could not be resolved by google.");
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        mView.showError("No address found some error occurred.");
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        // nothing to do here
+                    }
+                });
     }
 
     @Override
@@ -122,5 +169,11 @@ class MapsPresenter implements ILocationUpdatesListener {
                 mView.followLocationVisibility(View.GONE);
             }
         });
+    }
+
+    private void shutDownDisposables() {
+        if (mGeocodeDisposable != null && !mGeocodeDisposable.isDisposed()) {
+            mGeocodeDisposable.dispose();
+        }
     }
 }

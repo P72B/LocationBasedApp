@@ -33,6 +33,7 @@ android {
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "GOOGLE_API_BACKEND", "\"https://www.googleapis.com/\""
+        buildConfigField "String", "MAPS_GOOGLE_API_BACKEND", "\"https://maps.googleapis.com/\""
     }
     buildTypes {
         release {

@@ -1,4 +1,4 @@
-package de.p72b.bht.wp12.http;
+package de.p72b.bht.wp12.http.googleapi.geolocation;
 
 import android.support.annotation.Nullable;
 

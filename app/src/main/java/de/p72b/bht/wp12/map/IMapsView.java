@@ -3,6 +3,8 @@ package de.p72b.bht.wp12.map;
 import android.location.Location;
 import android.support.annotation.NonNull;
 
+import com.google.android.gms.maps.model.LatLng;
+
 public interface IMapsView {
     void moveCameraTo(@NonNull final Location location);
 
@@ -13,4 +15,8 @@ public interface IMapsView {
     void followLocationVisibility(final int visibility);
 
     void showWifiLocation(@NonNull final Location location);
+
+    void showAddressLocation(@NonNull LatLng latLng);
+
+    void showAddress(@NonNull final String title);
 }

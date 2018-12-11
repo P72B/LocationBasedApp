@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.view.MotionEvent;
@@ -17,14 +18,16 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import de.p72b.bht.wp12.R;
+import de.p72b.bht.wp12.Service.AppServices;
+import de.p72b.bht.wp12.http.IWebService;
 import de.p72b.bht.wp12.location.BaseLocationAwareActivity;
-import de.p72b.bht.wp12.location.ISettingsClientResultListener;
 
 public class MapsActivity extends BaseLocationAwareActivity implements IMapsView,
-        OnMapReadyCallback, View.OnClickListener, LocationSource {
+        OnMapReadyCallback, View.OnClickListener, LocationSource, GoogleMap.OnMapLongClickListener {
 
     private GoogleMap mMap;
     private MapsPresenter mPresenter;
@@ -35,6 +38,7 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
     private FloatingActionButton mLocateMeFabWifi;
     private int mLastFollowLocationVisibility;
     private Circle mWifiCircle;
+    private Marker mAddressMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +66,8 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
             }
         });
 
-        mPresenter = new MapsPresenter(this, mLocationManager);
+        IWebService webService = AppServices.getService(AppServices.WEB);
+        mPresenter = new MapsPresenter(this, mLocationManager, webService);
     }
 
     @Override
@@ -71,6 +76,7 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
 
         LatLng berlin = new LatLng(52.45, 13.64);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(berlin));
+        mMap.setOnMapLongClickListener(this);
 
         mMap.setLocationSource(this);
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
@@ -156,6 +162,32 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
     }
 
     @Override
+    public void showAddressLocation(@NonNull LatLng latLng) {
+        updateAddressMarker(latLng, null);
+    }
+
+    @Override
+    public void showAddress(@NonNull final String title) {
+        updateAddressMarker(mAddressMarker.getPosition(), title);
+    }
+
+    private void updateAddressMarker(@NonNull final LatLng latLng, @Nullable final String title) {
+        if (mMap == null) {
+            return;
+        }
+        final MarkerOptions markerOptions = new MarkerOptions()
+                .title(title)
+                .position(latLng);
+        if (mAddressMarker != null) {
+            mAddressMarker.remove();
+        }
+        mAddressMarker = mMap.addMarker(markerOptions);
+        if (title != null) {
+            mAddressMarker.showInfoWindow();
+        }
+    }
+
+    @Override
     public void activate(OnLocationChangedListener onLocationChangedListener) {
         mMapLocationListener = onLocationChangedListener;
     }
@@ -163,5 +195,10 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
     @Override
     public void deactivate() {
         mMapLocationListener = null;
+    }
+
+    @Override
+    public void onMapLongClick(LatLng latLng) {
+        mPresenter.onMapLongClick(latLng);
     }
 }
