@@ -8,6 +8,8 @@ import android.view.View;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.List;
+
 import de.p72b.bht.wp12.R;
 import de.p72b.bht.wp12.http.IWebService;
 import de.p72b.bht.wp12.http.googleapi.geocode.AddressResponse;
@@ -108,6 +110,12 @@ class MapsPresenter implements ILocationUpdatesListener {
     }
 
     void onMapLongClick(@NonNull final LatLng latLng) {
+        // TODO: from lesson build better input interface
+        //geocode("Luxemburger+Straße,Berlin");
+        reverseGeoCode(latLng);
+    }
+
+    private void reverseGeoCode(LatLng latLng) {
         mView.showAddressLocation(latLng);
         shutDownDisposables();
         mWebService.reverseGeoCoding(latLng)
@@ -137,6 +145,42 @@ class MapsPresenter implements ILocationUpdatesListener {
                     @Override
                     public void onComplete() {
                         // nothing to do here
+                    }
+                });
+    }
+
+    private void geocode(final String address) {
+        mWebService.geoCoding(address)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<AddressResponse>() {
+
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(AddressResponse addressResponse) {
+                        final List<AddressResponse.Result> resultList = addressResponse.getResults();
+                        if (resultList.size() > 0) {
+                            final LatLng resultLatLng = resultList.get(0).getLatLng();
+                            mView.showError(resultLatLng.toString());
+                            String address = addressResponse.getResults().get(0).getFormattedAddress();
+                            mView.showAddressLocation(resultLatLng);
+                            mView.showAddress(address);
+                            mView.moveCameraTo(resultLatLng);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
                     }
                 });
     }

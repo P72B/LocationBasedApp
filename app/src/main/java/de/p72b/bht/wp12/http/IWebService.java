@@ -14,4 +14,6 @@ public interface IWebService {
     Observable<GeolocationResponse> geolocate(@Nullable GeolocationRequest geolocationRequest);
 
     Observable<AddressResponse> reverseGeoCoding(LatLng latLng);
+
+    Observable<AddressResponse> geoCoding(String address);
 }

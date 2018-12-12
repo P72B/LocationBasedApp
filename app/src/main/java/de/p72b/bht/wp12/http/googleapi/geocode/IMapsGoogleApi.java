@@ -13,4 +13,8 @@ public interface IMapsGoogleApi {
                                                        @Query("latlng") String latLng,
                                                        @Query("language") String language);
 
+    @GET(ENDPOINT_MAPS_API_GEOCODE)
+    Observable<AddressResponse> geocodeLocation(@Query("key") String key,
+                                                @Query("address") String address);
+
 }

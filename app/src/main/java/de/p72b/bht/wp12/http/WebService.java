@@ -72,4 +72,9 @@ public class WebService implements IWebService {
         return getMapsGoogleApi().reverseGeocodeLocation(mGoogleApiKey,
                 latLng.latitude + "," + latLng.longitude, locale);
     }
+
+    @Override
+    public Observable<AddressResponse> geoCoding(@NonNull final String address) {
+        return getMapsGoogleApi().geocodeLocation(mGoogleApiKey,address);
+    }
 }

@@ -8,6 +8,8 @@ import com.google.android.gms.maps.model.LatLng;
 public interface IMapsView {
     void moveCameraTo(@NonNull final Location location);
 
+    void moveCameraTo(@NonNull final LatLng latLng);
+
     void showError(final String message);
 
     void onLocationChanged(@NonNull final Location location);

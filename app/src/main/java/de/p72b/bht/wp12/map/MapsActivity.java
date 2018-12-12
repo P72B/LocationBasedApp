@@ -109,6 +109,14 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
     }
 
     @Override
+    public void moveCameraTo(@NonNull final LatLng latLng) {
+        if (mMap == null) {
+            return;
+        }
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17));
+    }
+
+    @Override
     public void showError(@NonNull String message) {
         Snackbar.make(mRootView, message, Snackbar.LENGTH_LONG).show();
     }
