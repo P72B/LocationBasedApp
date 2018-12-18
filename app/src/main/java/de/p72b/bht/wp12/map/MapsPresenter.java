@@ -7,12 +7,15 @@ import android.support.v4.app.FragmentActivity;
 import android.view.View;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.List;
 
 import de.p72b.bht.wp12.R;
 import de.p72b.bht.wp12.http.IWebService;
-import de.p72b.bht.wp12.http.googleapi.geocode.AddressResponse;
+import de.p72b.bht.wp12.http.googleapi.maps.direction.DirectionsResponse;
+import de.p72b.bht.wp12.http.googleapi.maps.geocode.AddressResponse;
 import de.p72b.bht.wp12.location.ILastLocationListener;
 import de.p72b.bht.wp12.location.ILocationUpdatesListener;
 import de.p72b.bht.wp12.location.ISettingsClientResultListener;
@@ -29,7 +32,10 @@ class MapsPresenter implements ILocationUpdatesListener {
     private boolean mFollowLocation = false;
     private boolean mIsGpsBlocked = true;
     private Disposable mGeocodeDisposable;
+    private Disposable mReverseGeocodeDisposable;
+    private Disposable mDirectionsDisposable;
     private IWebService mWebService;
+    private Location mLastKnownLocation = null;
 
     MapsPresenter(@NonNull final FragmentActivity fragmentActivity,
                   @NonNull final LocationManager locationManager,
@@ -56,6 +62,7 @@ class MapsPresenter implements ILocationUpdatesListener {
                         if (location == null) {
                             return;
                         }
+                        mLastKnownLocation = location;
                         setGpsBlocked(false);
                         mView.moveCameraTo(location);
                     }
@@ -106,25 +113,81 @@ class MapsPresenter implements ILocationUpdatesListener {
 
     void onPause() {
         mLocationManager.unSubscribeToLocationChanges(this);
-        shutDownDisposables();
+        shutDownDisposable(mDirectionsDisposable);
+        shutDownDisposable(mReverseGeocodeDisposable);
+        shutDownDisposable(mGeocodeDisposable);
     }
 
     void onMapLongClick(@NonNull final LatLng latLng) {
         // TODO: from lesson build better input interface
         //geocode("Luxemburger+Straße,Berlin");
-        reverseGeoCode(latLng);
+
+        if (mLastKnownLocation == null) {
+            mView.showDirection(null);
+            reverseGeoCode(latLng);
+            return;
+        }
+        final Location target = new Location("test");
+        target.setLatitude(latLng.latitude);
+        target.setLongitude(latLng.longitude);
+        if (mLastKnownLocation.distanceTo(target) > 10_000) {
+            mView.showDirection(null);
+            reverseGeoCode(latLng);
+            return;
+        }
+        calculateDirection(new LatLng(mLastKnownLocation.getLatitude(),
+                mLastKnownLocation.getLongitude()), latLng);
+    }
+
+    private void calculateDirection(@NonNull final LatLng origin, @NonNull final LatLng destination) {
+        mView.showAddressLocation(destination);
+        shutDownDisposable(mDirectionsDisposable);
+        mWebService.calculateDirections(origin, destination)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<DirectionsResponse>() {
+                    @Override
+                    public void onSubscribe(Disposable disposable) {
+                        mDirectionsDisposable = disposable;
+                    }
+
+                    @Override
+                    public void onNext(DirectionsResponse directionsResponse) {
+                        if (directionsResponse == null) {
+                            return;
+                        }
+                        final PolylineOptions polylineOptions = directionsResponse.getPolyLineOptions();
+                        final String address = directionsResponse.getDestinationAddress();
+                        if (address != null) {
+                            mView.showAddress(address);
+                        } else {
+                            mView.showError("Address could not be resolved by google.");
+                        }
+                        mView.showDirection(polylineOptions);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        mView.showError("Direction couldn't be calculated.");
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        // do noting here so far
+                    }
+                });
     }
 
     private void reverseGeoCode(LatLng latLng) {
         mView.showAddressLocation(latLng);
-        shutDownDisposables();
+        shutDownDisposable(mReverseGeocodeDisposable);
         mWebService.reverseGeoCoding(latLng)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<AddressResponse>() {
                     @Override
                     public void onSubscribe(Disposable disposable) {
-                        mGeocodeDisposable = disposable;
+                        mReverseGeocodeDisposable = disposable;
                     }
 
                     @Override
@@ -150,14 +213,15 @@ class MapsPresenter implements ILocationUpdatesListener {
     }
 
     private void geocode(final String address) {
+        shutDownDisposable(mGeocodeDisposable);
         mWebService.geoCoding(address)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<AddressResponse>() {
 
                     @Override
-                    public void onSubscribe(Disposable d) {
-
+                    public void onSubscribe(Disposable disposable) {
+                        mGeocodeDisposable = disposable;
                     }
 
                     @Override
@@ -187,6 +251,7 @@ class MapsPresenter implements ILocationUpdatesListener {
 
     @Override
     public void onLocationChanged(@NonNull Location location) {
+        mLastKnownLocation = location;
         setGpsBlocked(false);
         mView.onLocationChanged(location);
         if (mFollowLocation) {
@@ -215,9 +280,9 @@ class MapsPresenter implements ILocationUpdatesListener {
         });
     }
 
-    private void shutDownDisposables() {
-        if (mGeocodeDisposable != null && !mGeocodeDisposable.isDisposed()) {
-            mGeocodeDisposable.dispose();
+    private void shutDownDisposable(@Nullable final Disposable disposable) {
+        if (disposable != null && !disposable.isDisposed()) {
+            disposable.dispose();
         }
     }
 }

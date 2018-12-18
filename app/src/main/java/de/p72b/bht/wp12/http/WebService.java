@@ -8,8 +8,9 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.Locale;
 
 import de.p72b.bht.wp12.BuildConfig;
-import de.p72b.bht.wp12.http.googleapi.geocode.AddressResponse;
-import de.p72b.bht.wp12.http.googleapi.geocode.IMapsGoogleApi;
+import de.p72b.bht.wp12.http.googleapi.maps.geocode.AddressResponse;
+import de.p72b.bht.wp12.http.googleapi.maps.direction.DirectionsResponse;
+import de.p72b.bht.wp12.http.googleapi.maps.IMapsGoogleApi;
 import de.p72b.bht.wp12.http.googleapi.geolocation.GeolocationRequest;
 import de.p72b.bht.wp12.http.googleapi.geolocation.GeolocationResponse;
 import de.p72b.bht.wp12.http.googleapi.geolocation.IGoogleApi;
@@ -70,11 +71,24 @@ public class WebService implements IWebService {
     public Observable<AddressResponse> reverseGeoCoding(@NonNull final LatLng latLng) {
         final String locale = Locale.getDefault().getLanguage();
         return getMapsGoogleApi().reverseGeocodeLocation(mGoogleApiKey,
-                latLng.latitude + "," + latLng.longitude, locale);
+                getGoogleApiRepresentation(latLng), locale);
     }
 
     @Override
     public Observable<AddressResponse> geoCoding(@NonNull final String address) {
         return getMapsGoogleApi().geocodeLocation(mGoogleApiKey,address);
+    }
+
+    @Override
+    public Observable<DirectionsResponse> calculateDirections(@NonNull LatLng origin,
+                                                              @NonNull LatLng destination) {
+        return getMapsGoogleApi().calculateDirections(mGoogleApiKey,
+                getGoogleApiRepresentation(origin),
+                getGoogleApiRepresentation(destination));
+    }
+
+    @NonNull
+    private String getGoogleApiRepresentation(@NonNull final LatLng latLng) {
+        return latLng.latitude + "," + latLng.longitude;
     }
 }

@@ -2,8 +2,10 @@ package de.p72b.bht.wp12.map;
 
 import android.location.Location;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 public interface IMapsView {
     void moveCameraTo(@NonNull final Location location);
@@ -21,4 +23,6 @@ public interface IMapsView {
     void showAddressLocation(@NonNull LatLng latLng);
 
     void showAddress(@NonNull final String title);
+
+    void showDirection(@Nullable final PolylineOptions polylineOptions);
 }

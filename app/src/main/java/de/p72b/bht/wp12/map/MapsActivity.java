@@ -20,6 +20,8 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import de.p72b.bht.wp12.R;
 import de.p72b.bht.wp12.Service.AppServices;
@@ -39,6 +41,7 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
     private int mLastFollowLocationVisibility;
     private Circle mWifiCircle;
     private Marker mAddressMarker;
+    private Polyline mDirection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -177,6 +180,19 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
     @Override
     public void showAddress(@NonNull final String title) {
         updateAddressMarker(mAddressMarker.getPosition(), title);
+    }
+
+    @Override
+    public void showDirection(@Nullable PolylineOptions polylineOptions) {
+        if (mMap == null) {
+            return;
+        }
+        if (mDirection != null) {
+            mDirection.remove();
+        }
+        if (polylineOptions != null) {
+            mDirection = mMap.addPolyline(polylineOptions);
+        }
     }
 
     private void updateAddressMarker(@NonNull final LatLng latLng, @Nullable final String title) {

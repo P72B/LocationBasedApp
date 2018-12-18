@@ -1,4 +1,4 @@
-package de.p72b.bht.wp12.http.googleapi.geocode;
+package de.p72b.bht.wp12.http.googleapi.maps.geocode;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
