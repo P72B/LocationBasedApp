@@ -5,7 +5,10 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.PolylineOptions;
+
+import java.util.List;
 
 public interface IMapsView {
     void moveCameraTo(@NonNull final Location location);
@@ -25,4 +28,8 @@ public interface IMapsView {
     void showAddress(@NonNull final String title);
 
     void showDirection(@Nullable final PolylineOptions polylineOptions);
+
+    @Nullable LatLngBounds getVisibleViewport();
+
+    void showGrid(List<PolylineOptions> lines);
 }

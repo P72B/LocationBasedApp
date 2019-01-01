@@ -34,6 +34,7 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         buildConfigField "String", "GOOGLE_API_BACKEND", "\"https://www.googleapis.com/\""
         buildConfigField "String", "MAPS_GOOGLE_API_BACKEND", "\"https://maps.googleapis.com/\""
+        buildConfigField "String", "WHAT_3_WORDS_API_BACKEND", "\"https://api.what3words.com/\""
     }
     buildTypes {
         release {

@@ -4,6 +4,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 
 import java.util.Locale;
 
@@ -14,6 +15,10 @@ import de.p72b.bht.wp12.http.googleapi.maps.IMapsGoogleApi;
 import de.p72b.bht.wp12.http.googleapi.geolocation.GeolocationRequest;
 import de.p72b.bht.wp12.http.googleapi.geolocation.GeolocationResponse;
 import de.p72b.bht.wp12.http.googleapi.geolocation.IGoogleApi;
+import de.p72b.bht.wp12.http.what3words.ApiHeaderInterceptor;
+import de.p72b.bht.wp12.http.what3words.GridResponse;
+import de.p72b.bht.wp12.http.what3words.IWhat3WordsApi;
+import de.p72b.bht.wp12.http.what3words.ReverseResponse;
 import io.reactivex.Observable;
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
@@ -23,11 +28,30 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class WebService implements IWebService {
 
     private IGoogleApi mProxyGoogleApiService;
+    private IWhat3WordsApi mProxyWhat3WordsService;
     private IMapsGoogleApi mProxyMapsGoogleApiService;
     private final String mGoogleApiKey = "KEY_HERE";
+    private final String mWhat3WordsApiKey = "KEY_HERE";
 
     public WebService() {
 
+    }
+
+    private IWhat3WordsApi getWhat3WordsApi() {
+        if (mProxyWhat3WordsService != null) {
+            return mProxyWhat3WordsService;
+        }
+        OkHttpClient.Builder client = new OkHttpClient.Builder();
+        client.addInterceptor(new ApiHeaderInterceptor(mWhat3WordsApiKey));
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BuildConfig.WHAT_3_WORDS_API_BACKEND)
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(client.build())
+                .build();
+        mProxyWhat3WordsService = retrofit.create(IWhat3WordsApi.class);
+        return mProxyWhat3WordsService;
     }
 
     private IGoogleApi getGoogleApi() {
@@ -87,8 +111,27 @@ public class WebService implements IWebService {
                 getGoogleApiRepresentation(destination));
     }
 
+    @Override
+    public Observable<GridResponse> grid(@NonNull final LatLngBounds bbox) {
+        return getWhat3WordsApi().grid("json",
+                getWhat3WordsApiRepresentation(bbox));
+    }
+
+
+    @Override
+    public Observable<ReverseResponse> reverse(@NonNull final LatLng latLng) {
+        return getWhat3WordsApi().reverse("json",
+                getGoogleApiRepresentation(latLng));
+    }
+
     @NonNull
     private String getGoogleApiRepresentation(@NonNull final LatLng latLng) {
         return latLng.latitude + "," + latLng.longitude;
+    }
+
+    @NonNull
+    private String getWhat3WordsApiRepresentation(@NonNull final LatLngBounds bounds) {
+        return bounds.northeast.latitude + "," + bounds.northeast.longitude + ","
+                + bounds.southwest.latitude + "," + bounds.southwest.longitude;
     }
 }

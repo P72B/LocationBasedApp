@@ -1,21 +1,27 @@
 package de.p72b.bht.wp12.map;
 
+import android.content.Context;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import de.p72b.bht.wp12.AppUtils;
 import de.p72b.bht.wp12.R;
 import de.p72b.bht.wp12.http.IWebService;
 import de.p72b.bht.wp12.http.googleapi.maps.direction.DirectionsResponse;
 import de.p72b.bht.wp12.http.googleapi.maps.geocode.AddressResponse;
+import de.p72b.bht.wp12.http.what3words.GridResponse;
+import de.p72b.bht.wp12.http.what3words.ReverseResponse;
 import de.p72b.bht.wp12.location.ILastLocationListener;
 import de.p72b.bht.wp12.location.ILocationUpdatesListener;
 import de.p72b.bht.wp12.location.ISettingsClientResultListener;
@@ -34,14 +40,18 @@ class MapsPresenter implements ILocationUpdatesListener {
     private Disposable mGeocodeDisposable;
     private Disposable mReverseGeocodeDisposable;
     private Disposable mDirectionsDisposable;
+    private Disposable mGridDisposable;
+    private Disposable mReverseDisposable;
     private IWebService mWebService;
     private Location mLastKnownLocation = null;
+    private Context mContext;
 
     MapsPresenter(@NonNull final FragmentActivity fragmentActivity,
                   @NonNull final LocationManager locationManager,
                   @NonNull final IWebService webService) {
         mLocationManager = locationManager;
         mWebService = webService;
+        mContext = fragmentActivity.getApplicationContext();
         mView = (IMapsView) fragmentActivity;
         initLocateMeFabIcon();
     }
@@ -116,12 +126,11 @@ class MapsPresenter implements ILocationUpdatesListener {
         shutDownDisposable(mDirectionsDisposable);
         shutDownDisposable(mReverseGeocodeDisposable);
         shutDownDisposable(mGeocodeDisposable);
+        shutDownDisposable(mGridDisposable);
+        shutDownDisposable(mReverseDisposable);
     }
 
     void onMapLongClick(@NonNull final LatLng latLng) {
-        // TODO: from lesson build better input interface
-        //geocode("Luxemburger+Straße,Berlin");
-
         if (mLastKnownLocation == null) {
             mView.showDirection(null);
             reverseGeoCode(latLng);
@@ -135,8 +144,21 @@ class MapsPresenter implements ILocationUpdatesListener {
             reverseGeoCode(latLng);
             return;
         }
-        calculateDirection(new LatLng(mLastKnownLocation.getLatitude(),
-                mLastKnownLocation.getLongitude()), latLng);
+        final LatLngBounds bounds = mView.getVisibleViewport();
+        if (bounds == null) {
+            calculateDirection(new LatLng(mLastKnownLocation.getLatitude(),
+                    mLastKnownLocation.getLongitude()), latLng);
+            return;
+        }
+
+        final double diameter = AppUtils.getDiameter(bounds);
+        if (diameter > 2_000) {
+            calculateDirection(new LatLng(mLastKnownLocation.getLatitude(),
+                    mLastKnownLocation.getLongitude()), latLng);
+        } else {
+            reverse(latLng);
+            grid(bounds);
+        }
     }
 
     private void calculateDirection(@NonNull final LatLng origin, @NonNull final LatLng destination) {
@@ -240,6 +262,80 @@ class MapsPresenter implements ILocationUpdatesListener {
                     @Override
                     public void onError(Throwable e) {
 
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+    }
+
+    private void grid(@NonNull final LatLngBounds bounds) {
+        shutDownDisposable(mGridDisposable);
+        mWebService.grid(bounds)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<GridResponse>() {
+
+                    @Override
+                    public void onSubscribe(Disposable disposable) {
+                        mGridDisposable = disposable;
+                    }
+
+                    @Override
+                    public void onNext(GridResponse response) {
+                        final List<PolylineOptions> polylineOptionsList = new ArrayList<>();
+                        for (GridResponse.Line line: response.getLines()) {
+                            final PolylineOptions polylineOptions = new PolylineOptions();
+                            polylineOptions.color(ContextCompat.getColor(mContext, R.color.grid));
+                            polylineOptions.width(0.8f);
+                            polylineOptions.add(line.getStart());
+                            polylineOptions.add(line.getEnd());
+                            polylineOptionsList.add(polylineOptions);
+                        }
+                        mView.showGrid(polylineOptionsList);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        mView.showError("No grid found some error occurred.");
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+    }
+
+
+    private void reverse(@NonNull final LatLng latLng) {
+        mView.showAddressLocation(latLng);
+        shutDownDisposable(mReverseDisposable);
+        mWebService.reverse(latLng)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<ReverseResponse>() {
+
+                    @Override
+                    public void onSubscribe(Disposable disposable) {
+                        mReverseDisposable = disposable;
+                    }
+
+                    @Override
+                    public void onNext(ReverseResponse response) {
+                        final String words = response.getWords();
+                        if (words != null) {
+                            mView.showAddress(words);
+                        } else {
+                            mView.showError("No what3words address could not resolved.");
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        mView.showError("No what3words address found some error occurred.");
                     }
 
                     @Override

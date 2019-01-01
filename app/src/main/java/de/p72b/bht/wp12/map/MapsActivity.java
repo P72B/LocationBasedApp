@@ -18,14 +18,19 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.p72b.bht.wp12.R;
 import de.p72b.bht.wp12.Service.AppServices;
 import de.p72b.bht.wp12.http.IWebService;
+import de.p72b.bht.wp12.http.what3words.GridResponse;
 import de.p72b.bht.wp12.location.BaseLocationAwareActivity;
 
 public class MapsActivity extends BaseLocationAwareActivity implements IMapsView,
@@ -42,6 +47,7 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
     private Circle mWifiCircle;
     private Marker mAddressMarker;
     private Polyline mDirection;
+    private List<Polyline> mGrid = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -224,5 +230,27 @@ public class MapsActivity extends BaseLocationAwareActivity implements IMapsView
     @Override
     public void onMapLongClick(LatLng latLng) {
         mPresenter.onMapLongClick(latLng);
+    }
+
+    @Override
+    @Nullable
+    public LatLngBounds getVisibleViewport() {
+        if (mMap == null) {
+            return null;
+        }
+        return mMap.getProjection().getVisibleRegion().latLngBounds;
+    }
+
+    @Override
+    public void showGrid(@NonNull final List<PolylineOptions> polylines) {
+        for (int i = 0; i < mGrid.size(); i++) {
+            mGrid.get(i).remove();
+        }
+        mGrid.clear();
+
+        for (PolylineOptions polylineOptions: polylines) {
+            final Polyline polyline = mMap.addPolyline(polylineOptions);
+            mGrid.add(polyline);
+        }
     }
 }
